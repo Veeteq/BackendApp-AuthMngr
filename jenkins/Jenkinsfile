@@ -85,6 +85,7 @@ pipeline {
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
                     --network ${NETWORK_NAME} \
                     -e AUTH_ISSUER=http://${VM_HOST}:${HOST_PORT} \
+                    -e SERVER_PORT=${CONTAINER_PORT} \
                     --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
                 sh 'docker logs --tail 30 ${CONTAINER_NAME}'
