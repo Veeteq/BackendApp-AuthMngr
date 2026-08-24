@@ -3,6 +3,7 @@ package com.veeteq.auth.authservice.rest.api;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,6 +23,8 @@ import com.veeteq.auth.authservice.rest.dto.UserRegistrationDto;
 import com.veeteq.auth.authservice.service.AuthUserService;
 import com.veeteq.auth.authservice.service.CookieService;
 import com.veeteq.auth.authservice.service.RefreshTokenService;
+
+import static java.time.ZoneOffset.UTC;
 
 @RestController
 @RequestMapping("${app.api.base-path}/auth")
@@ -64,7 +67,7 @@ public class AuthController implements AuthenticationApi {
         var response = new LoginResponseDto()
                 .type("Bearer")
                 .token(accessToken.token())
-                .expiresAt(LocalDateTime.ofInstant(accessToken.expiresAt(), ZoneOffset.UTC))
+                .expiresAt(ZonedDateTime.ofInstant(accessToken.expiresAt(), UTC))
                 .roles(accessToken.roles())
                 .user(null);
 
@@ -100,7 +103,7 @@ public class AuthController implements AuthenticationApi {
         var response = new AuthTokenResponseDto()
                 .type("Bearer")
                 .token(accessToken.token())
-                .expiresAt(LocalDateTime.ofInstant(accessToken.expiresAt(), ZoneOffset.UTC));
+                .expiresAt(ZonedDateTime.ofInstant(accessToken.expiresAt(), UTC));
 
         return ResponseEntity.ok()
                 .headers(headers)

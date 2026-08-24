@@ -93,10 +93,10 @@
                             <typeMappings>
                                 <!-- convert Double to BigDecimal -->
                                 <typeMapping>Double=java.math.BigDecimal</typeMapping>
-                                <typeMapping>OffsetDateTime=LocalDateTime</typeMapping>
+                                <typeMapping>OffsetDateTime=ZonedDateTime</typeMapping>
                             </typeMappings>
                             <importMappings>
-                                <importMapping>java.time.OffsetDateTime=java.time.LocalDateTime</importMapping>
+                                <importMapping>java.time.OffsetDateTime=java.time.ZonedDateTime</importMapping>
                             </importMappings>
                         </configuration>
                     </execution>
