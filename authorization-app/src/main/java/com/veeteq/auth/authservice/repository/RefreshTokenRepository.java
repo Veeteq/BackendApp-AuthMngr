@@ -17,11 +17,20 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     // Revoke all active tokens for a user (used to enforce a single active token)
     @Modifying
     @Query("""
-        UPDATE RefreshToken rt
-           SET rt.revoked = true
-         WHERE rt.authUser.id = :userId
-           AND rt.revoked = false
-           AND rt.expiresAt > CURRENT_TIMESTAMP
-    """)
+            UPDATE RefreshToken rt
+               SET rt.revoked = true
+             WHERE rt.authUser.id = :userId
+               AND rt.revoked = false
+               AND rt.expiresAt > CURRENT_TIMESTAMP
+            """)
     void revokeAllTokensByUserId(Long userId);
+
+    @Query("""
+            SELECT rt
+              FROM RefreshToken rt
+              JOIN FETCH rt.authUser au
+              JOIN FETCH au.roles
+             WHERE rt.token = :token
+            """)
+    Optional<RefreshToken> findByTokenWithUserAndRoles(String token);
 }
