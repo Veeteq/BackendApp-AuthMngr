@@ -50,7 +50,7 @@ public class RefreshTokenService {
     /** Validate token (exists, not revoked, not expired). */
     @Transactional//(readOnly = true)
     public AuthUser validateTokenAndGetAuthuser(String token) {
-        var savedToken = tokenRepository.findByToken(token).orElseThrow(() -> new IllegalArgumentException("Invalid token provided"));
+        var savedToken = tokenRepository.findByTokenWithUserAndRoles(token).orElseThrow(() -> new IllegalArgumentException("Invalid token provided"));
         if (savedToken.isRevoked()) throw new IllegalArgumentException("Token already revoked");
         if (savedToken.isExpired()) throw new IllegalArgumentException("Token already expired");
         var authUser = savedToken.getAuthUser();
