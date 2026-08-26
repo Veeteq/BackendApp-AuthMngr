@@ -1,11 +1,7 @@
 package com.veeteq.auth.authservice.rest.api;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 import com.veeteq.auth.authservice.service.AccessTokenService;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,9 +77,9 @@ public class AuthController implements AuthenticationApi {
      */
     @Override
     @PostMapping(path = "/refresh")
-    public ResponseEntity<AuthTokenResponseDto> refreshToken(String setCookie) {
+    public ResponseEntity<AuthTokenResponseDto> refreshToken(String cookie) {
         var cookieName = cookieService.getName();
-        var cookieToken = extractCookie(setCookie, cookieName);
+        var cookieToken = extractCookie(cookie, cookieName);
 
         if (cookieToken == null || cookieToken.isBlank()) {
             return ResponseEntity.status(401).build();
@@ -94,9 +90,9 @@ public class AuthController implements AuthenticationApi {
         // rotate: revoke old, issue new
         var rotated = refreshTokenService.rotateTokenForUser(authUser);
 
-        var cookie = cookieService.createCookie(rotated.getToken());
+        var responseCookie = cookieService.createCookie(rotated.getToken());
         var headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, cookie.toString());
+        headers.add(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         var accessToken = accessTokenService.issueToken(authUser);
 

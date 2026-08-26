@@ -65,7 +65,7 @@ app:
   cookie:
     refresh:
       name: REFRESH_TOKEN
-      domain: localhost               # set your domain in prod (e.g., app.example.com)
+      #domain: localhost               # set your domain in prod (e.g., app.example.com)
       path: /api/auth
       secure: false                   # true in prod (HTTPS)
       http-only: true
