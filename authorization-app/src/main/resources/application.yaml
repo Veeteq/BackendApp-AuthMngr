@@ -58,6 +58,7 @@ app:
     allowed-headers:
       - Authorization
       - Content-Type
+      - Transaction-Id
     allow-credentials: true
   jwt:
     access-token-seconds: 3600
