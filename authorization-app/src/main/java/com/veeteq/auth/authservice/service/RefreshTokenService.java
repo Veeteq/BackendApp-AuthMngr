@@ -1,15 +1,14 @@
 package com.veeteq.auth.authservice.service;
 
+import com.veeteq.auth.authservice.config.SecurityProperties;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
 import com.veeteq.auth.authservice.repository.RefreshTokenRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
 @Service
@@ -17,26 +16,27 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository tokenRepository;
     private final SecureRandom random = new SecureRandom();
-    private final int refreshDays;
+    private final SecurityProperties securityProperties;
 
-    public RefreshTokenService(RefreshTokenRepository tokenRepository, @Value("${app.jwt.refresh-token-days:14}") int refreshDays) {
+    public RefreshTokenService(RefreshTokenRepository tokenRepository, SecurityProperties securityProperties) {
         this.tokenRepository = tokenRepository;
-        this.refreshDays = refreshDays;
+        this.securityProperties = securityProperties;
     }
 
     /** Create a new opaque token and persist it for the user. */
     @Transactional
     public RefreshToken issueToken(AuthUser authUser) {
         String token = generateOpaqueToken();
+        var now = Instant.now();
+        var expiresAt = now.plus(securityProperties.refreshTokenDuration());
         var rt = new RefreshToken()
                 .setId(tokenRepository.getId())
                 .setToken(token)
                 .setAuthUser(authUser)
-                .setExpiresAt(Instant.now().plus(refreshDays, ChronoUnit.DAYS))
+                .setExpiresAt(expiresAt)
                 .setRevoked(false);
         return tokenRepository.save(rt);
     }
-
 
     /** Validate token (exists, not revoked, not expired). */
     @Transactional//(readOnly = true)

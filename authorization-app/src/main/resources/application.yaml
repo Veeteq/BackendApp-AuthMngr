@@ -60,9 +60,6 @@ app:
       - Content-Type
       - Transaction-Id
     allow-credentials: true
-  jwt:
-    access-token-seconds: 3600
-    refresh-token-days: 14            # 14 days refresh lifetime
   cookie:
     refresh:
       name: REFRESH_TOKEN
@@ -74,7 +71,7 @@ app:
   security:
       issuer: ${AUTH_ISSUER:http://localhost:8282}
       access-token-seconds: ${ACCESS_TOKEN_SECONDS:3600}
-
+      refresh-token-days: ${REFRESH_TOKEN_DAYS:14}            # 14 days refresh lifetime
 management:
   endpoint:
     health:
