@@ -60,7 +60,7 @@ The backend application was built in structured, logical development phases:
 ## Quick Start & Running the Application
 
 ### Prerequisites
-* Java Development Kit (JDK 17 or higher)
+* Java Development Kit (JDK 21 or higher)
 * Maven wrapper (`./mvnw`) or Gradle wrapper (`./gradlew`)
 
 ### Starting the Server
