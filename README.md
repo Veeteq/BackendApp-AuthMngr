@@ -1,78 +1,110 @@
-# Chunk 1 — Project & Dependencies Setup
-Goal: Create a Spring Boot project wired for web, security, data persistence, and JWT.
-What you’ll do:
+# BackendApp-AuthMngr: Authentication Manager Service
 
-Create a new Spring Boot project (Maven or Gradle).
-Add dependencies:
+`BackendApp-AuthMngr` is a modern, stateless RESTful backend service built with **Spring Boot 3**, **Spring Security 6**, **Spring Data JPA**, and **Nimbus JOSE (OAuth2 Resource Server)**. It provides robust user authentication, registration, JWT token generation, and account management capabilities based on an OpenAPI 3.0 contract.
 
-spring-boot-starter-web
-spring-boot-starter-security
-spring-boot-starter-data-jpa
-Database driver (e.g., postgresql or h2 for dev)
-JWT: either jjwt-api, jjwt-impl, jjwt-jackson or use Spring’s spring-security-oauth2-jose (Nimbus JOSE).
+---
 
+## System Architecture & Component Dependencies
 
-Set basic application.yml (server port, datasource, JPA settings, CORS placeholder, API prefix).
-Decide JWT signing strategy: HS256 (shared secret) vs RS256 (key pair). For production, prefer RS256.
+The complete Authentication Manager solution consists of three decoupled components:
 
-Validation:
+```
++------------------------------------------------------------------+
+|                   OpenAPI-AuthManager                            |
+|             (API Specification & Schemas)                        |
++------------------------------------------------------------------+
+                                |
+             +------------------+------------------+
+             |                                     |
+             v                                     v
++---------------------------+         +----------------------------+
+|    BackendApp-AuthMngr    | <=====> |   FrontendApp-AuthManager   |
+| (Spring Boot REST Engine) |   HTTP  |   (Angular Standalone SPA) |
++---------------------------+  (JWT)  +----------------------------+
+```
 
-App starts: ./mvnw spring-boot:run or ./gradlew bootRun.
-/actuator/health (if actuator added) returns UP, or base / returns 404 (normal).
+### Component Roles & Relationships
 
-# Chunk 2 — Domain Model & Persistence
-Goal: Define user accounts, roles/authorities, and persistence layer.
-What you’ll do:
+* **`OpenAPI-AuthManager`**: Defines the single source of truth for REST endpoints, schemas (`LoginRequest`, `UserRegistration`, `AuthResponse`, `UserResponse`), error structures, and HTTP response codes.
+* **`BackendApp-AuthMngr`**: Implements the OpenAPI specification. Handles credential verification, BCrypt password hashing, RS256 JWT issuing/validation, database persistence (H2 in-memory for development), and role-based security filters.
+* **`FrontendApp-AuthManager`**: Consumes the backend REST API via Angular Standalone components, functional HTTP interceptors (for `Authorization: Bearer <token>` injection), and Route Guards (`CanActivate`).
 
-Create entities:
+---
 
-User (id, username/email, password (BCrypt), enabled, createdAt).
-Role (id, name) or keep roles as a collection of strings for simplicity.
+## Development Milestones & Core Capabilities
 
+The backend application was built in structured, logical development phases:
 
-Create JPA repositories:
+### Chunk 1 — Project Infrastructure & Dependencies
+* **Core Technology Stack**: Spring Boot 3, Java 17+, Maven/Gradle.
+* **Key Dependencies**:
+    * `spring-boot-starter-web` for REST API endpoints.
+    * `spring-boot-starter-security` & `spring-security-oauth2-jose` (Nimbus JOSE) for JWT resource server capabilities.
+    * `spring-boot-starter-data-jpa` & `h2` database for persistence.
+    * `spring-boot-starter-actuator` for health monitoring.
+* **JWT Signing Strategy**: Configured for asymmetric **RS256** (RSA public/private key pairs) for production-grade security.
 
-UserRepository with findByUsername/findByEmail.
+### Chunk 2 — Domain Model & Persistence Layer
+* **Decoupled Domain Architecture**: The `User` JPA entity is kept clean and independent from Spring Security interfaces to avoid serialization leaks and framework coupling.
+* **Repositories & Seed Data**: `UserRepository` interface with custom lookup methods (`findByUsername`, `findByEmail`). Seed dev users initialized via database script or runner.
+* **Data Transfer Objects**: Implementation of clean request/response models (`LoginRequest`, `UserRegistration`, `AuthResponse`, `UserResponse`).
 
+### Chunk 3 — Security Configuration & JWT Plumbing
+* **Stateless Security Filter Chain**: Configured `SessionCreationPolicy.STATELESS` with public access allowed for `/auth/**` endpoints (`/auth/login`, `/auth/register`, `/auth/refresh`) and token protection enforced on `/api/**`.
+* **CORS Support**: Integrated `CorsConfigurationSource` to seamlessly accept cross-origin requests from the Angular client (`http://localhost:4200`).
+* **Security Adapter**: Created a `UserPrincipal` adapter class implementing `UserDetails` to wrap the `User` entity cleanly inside `CustomUserDetailsService`.
+* **Password Encoding**: Integrated `BCryptPasswordEncoder` for hashing user passwords at registration and login verification. Pre-seeded hash values can be generated using online tools like [BCrypt Generator](https://bcrypt-generator.com/).
 
-Seed a dev user (data.sql or CommandLineRunner).
-DTOs: LoginRequest, RegisterRequest, UserResponse.
+---
 
-Validation:
+## Quick Start & Running the Application
 
-Run app and verify the dev user exists (e.g., via repository test or temporary endpoint).
+### Prerequisites
+* Java Development Kit (JDK 17 or higher)
+* Maven wrapper (`./mvnw`) or Gradle wrapper (`./gradlew`)
 
-# Chunk 3 — Security Configuration & JWT Plumbing
-Goal: Configure Spring Security and JWT verification on protected endpoints.
-What you’ll do:
+### Starting the Server
 
-Define a SecurityConfig:
+To start the Spring Boot application locally:
 
-Permit /auth/** (login/register/refresh)
-Protect /api/**
-Configure CORS allowed origin for Angular (http://localhost:4200 by default).
-Password encoder: BCryptPasswordEncoder.
-Obtain our hash using an online service like Bcrypt Generator: https://bcrypt-generator.com/
+```bash
+# Using Maven wrapper
+./mvnw spring-boot:run
 
-Implement UserDetailsService to load users by username.
-Implement JWT utilities:
+# Or using Gradle wrapper
+./gradlew bootRun
+```
 
-Create/verify token
-Claims: sub, roles, exp, iat
+The application starts on port `8080` by default.
 
+### Health Check & Monitoring
 
-Implement a JwtAuthenticationFilter:
+When Spring Boot Actuator is enabled, verify the server status via:
 
-Reads Authorization: Bearer <token>
-Validates token, sets SecurityContext.
+```
+GET http://localhost:8080/actuator/health
+```
 
+Expected Response:
+```json
+{
+  "status": "UP"
+}
+```
 
-Validation:
+### Password Hashing Tool
 
-Protected endpoint /api/ping returns 401 without token.
-With a valid token in Authorization header, returns 200.
+For manually generating or validating BCrypt password hashes for database seeding or testing, use:
+* **BCrypt Generator**: [https://bcrypt-generator.com/](https://bcrypt-generator.com/)
 
-- SecurityFilterChain with /auth/** permitted and /api/** protected
-- CorsConfigurationSource wired to your application.yml
-- JwtEncoder/JwtDecoder beans (RS256 keypair for dev)
-- A POST /auth/login endpoint example returning { token }
+---
+
+## API Summary & Endpoints
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/auth/login` | Public | Authenticates credentials, returns JWT Access Token |
+| `POST` | `/auth/register` | Public | Creates a new user account with BCrypt password hashing |
+| `POST` | `/auth/refresh` | Public / Cookie | Issues a new Access Token using a valid Refresh Token |
+| `GET` | `/api/users/me` | Protected | Retrieves current authenticated user profile |
+| `GET` | `/actuator/health` | Public | Returns system operational status (`UP`) |

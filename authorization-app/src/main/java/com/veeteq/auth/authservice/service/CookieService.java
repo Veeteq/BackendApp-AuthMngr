@@ -37,7 +37,7 @@ public class CookieService {
                 .httpOnly(httpOnly)
                 .secure(secure)
                 .sameSite(sameSite)
-                .maxAge(securityProperties.refreshTokenDuration())
+                .maxAge(securityProperties.refreshTokenDays())
                 .build();
         return cookie;
     }
