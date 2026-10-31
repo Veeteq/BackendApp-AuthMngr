@@ -28,7 +28,7 @@ public class RefreshTokenService {
     public RefreshToken issueToken(AuthUser authUser) {
         String token = generateOpaqueToken();
         var now = Instant.now();
-        var expiresAt = now.plus(securityProperties.refreshTokenDuration());
+        var expiresAt = now.plus(securityProperties.refreshTokenDays());
         var rt = new RefreshToken()
                 .setId(tokenRepository.getId())
                 .setToken(token)

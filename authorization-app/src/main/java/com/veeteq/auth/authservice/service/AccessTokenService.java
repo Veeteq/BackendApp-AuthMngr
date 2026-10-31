@@ -26,7 +26,7 @@ public class AccessTokenService {
 
     public AccessTokenResult issueToken(Authentication authentication) {
         Instant now = Instant.now();
-        Instant expiresAt = now.plusSeconds(securityProperties.accessTokenSeconds());
+        Instant expiresAt = now.plus(securityProperties.accessTokenSeconds());
 
         var roles = extractRoles(authentication);
         var claims = JwtClaimsSet.builder()

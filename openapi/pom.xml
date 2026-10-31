@@ -67,7 +67,7 @@
                         </goals>
                         <configuration>
                             <skipValidateSpec>true</skipValidateSpec>
-                            <inputSpec>https://veeteq.github.io/OpenAPI-Auth/openapi.yaml</inputSpec>
+                            <inputSpec>https://veeteq.github.io/OpenAPI-AuthManager/openapi.yaml</inputSpec>
                             <!-- <inputSpec>http://127.0.0.1:8181/openapi.json</inputSpec> -->
                             <!--<inputSpec>${openapi.inputSpec}</inputSpec>-->
                             <generatorName>spring</generatorName>

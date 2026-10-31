@@ -8,8 +8,8 @@ NETWORK_NAME="backend-network"
 HOST_NAME="localhost"
 HOST_PORT="8282"
 CONTAINER_PORT="8080"
-ACCESS_TOKEN_SECONDS=3600
-REFRESH_TOKEN_DAYS=14
+ACCESS_TOKEN_SECONDS=3600s
+REFRESH_TOKEN_DAYS=14d
 
 echo "Configuring app network"
 if ! docker network inspect "${NETWORK_NAME}" >/dev/null 2>&1; then

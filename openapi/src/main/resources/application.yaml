@@ -1,4 +1,4 @@
 openapi:
   #inputSpec: http://127.0.0.1:8181/openapi.json
-  inputSpec: https://veeteq.github.io/OpenAPI-Auth/openapi.yaml
+  inputSpec: https://veeteq.github.io/OpenAPI-AuthManager/openapi.yaml
   #inputSpec: ${project.basedir}/src/main/resources/openapi.yaml

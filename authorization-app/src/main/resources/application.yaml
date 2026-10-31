@@ -70,8 +70,8 @@ app:
       same-site: Lax                  # use "None" for cross-site; requires secure=true
   security:
       issuer: ${AUTH_ISSUER:http://localhost:8282}
-      access-token-seconds: ${ACCESS_TOKEN_SECONDS:3600}
-      refresh-token-days: ${REFRESH_TOKEN_DAYS:14}            # 14 days refresh lifetime
+      access-token-seconds: ${ACCESS_TOKEN_SECONDS:3600s}
+      refresh-token-days: ${REFRESH_TOKEN_DAYS:14d}            # 14 days refresh lifetime
 management:
   endpoint:
     health:
