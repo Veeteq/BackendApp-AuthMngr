@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
+      SPRING_PROFILES_ACTIVE = "default"
+      DB_CREDENTIALS = credentials('budget-db')
       VM_HOST = '192.168.56.104'
-      NETWORK_NAME = 'backend-network'
       JAR_PATH = 'authorization-app/target/authorization-app.jar'
       REPOSITORY_URL = 'ssh://root@192.168.56.104/root/git/bck-authorization-svc.git'
       IMAGE_NAME = 'authorization-app'
@@ -23,6 +24,11 @@ pipeline {
         stage('Debug') {
             steps {
                 echo "Building branch: ${params.BRANCH}"
+                echo "DB_HOST=$DB_HOST"
+                echo "DB_PORT=$DB_PORT"
+                echo "DB_NAME=$DB_NAME"
+                echo "DB_USER=$DB_CREDENTIALS_USR"
+                echo "NETWORK_NAME=$NETWORK_NAME"
             }
         }
 
@@ -88,6 +94,12 @@ pipeline {
                     --network ${NETWORK_NAME} \
                     -e AUTH_ISSUER=http://${VM_HOST}:${HOST_PORT} \
                     -e SERVER_PORT=${CONTAINER_PORT} \
+                    -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE} \
+                    -e DB_HOST=${DB_HOST} \
+                    -e DB_PORT=${DB_PORT} \
+                    -e DB_NAME=${DB_NAME} \
+                    -e DB_USER=${DB_CREDENTIALS_USR} \
+                    -e DB_PASSWORD=${DB_CREDENTIALS_PSW} \
                     -e ACCESS_TOKEN_SECONDS=${ACCESS_TOKEN_SECONDS} \
                     -e REFRESH_TOKEN_DAYS=${REFRESH_TOKEN_DAYS} \
                     --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
@@ -125,6 +137,7 @@ pipeline {
                 rm -f authorization-app/src/main/resources/keys/private-key.pem || true
                 rm -f authorization-app/src/main/resources/keys/public-key.pem || true
             '''
+            cleanWs()
         }
     }
 }
