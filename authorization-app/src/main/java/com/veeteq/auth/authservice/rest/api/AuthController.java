@@ -68,7 +68,7 @@ public class AuthController implements AuthenticationApi {
                 .token(accessToken.token())
                 .expiresAt(ZonedDateTime.ofInstant(accessToken.expiresAt(), UTC))
                 .roles(roles)
-                .user(null);
+                .user(authUserMapper.toDto(authUser));
 
         return ResponseEntity.ok()
                 .headers(headers)

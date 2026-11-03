@@ -2,7 +2,9 @@ package com.veeteq.auth.authservice.rest.api;
 
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
+import com.veeteq.auth.authservice.mapper.AuthUserMapper;
 import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
+import com.veeteq.auth.authservice.rest.dto.UserResponseDto;
 import com.veeteq.auth.authservice.rest.dto.UserRoleDto;
 import com.veeteq.auth.authservice.service.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-public class AuthController1Test {
+public class AuthControllerUnitTest {
 
     @Mock
     private AuthUserService authUserService;
@@ -45,6 +48,9 @@ public class AuthController1Test {
 
     @InjectMocks
     private AuthController authController;
+
+    @Mock
+    private AuthUserMapper authUserMapper;
 
     @BeforeEach
     public void setUp() {
@@ -66,6 +72,11 @@ public class AuthController1Test {
         
         var authentication = new TestingAuthenticationToken("testuser", "password", "ROLE_USER");
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+
+        var userResponseDto = new UserResponseDto()
+                .id(1L)
+                .username("Witek");
+        when(authUserMapper.toDto(any(AuthUser.class))).thenReturn(userResponseDto);
 
         //when(accessTokenService.extractRoles(authentication)).thenReturn(List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
         var accessTokenResult = new AccessTokenResult("test-access-token", Instant.parse("2026-08-15T18:00:00Z"), List.of("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN"));
