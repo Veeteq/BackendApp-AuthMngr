@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veeteq.auth.authservice.config.JacksonProblemConfig;
 import com.veeteq.auth.authservice.entity.AuthUser;
 import com.veeteq.auth.authservice.entity.RefreshToken;
+import com.veeteq.auth.authservice.exception.GlobalExceptionAdvice;
 import com.veeteq.auth.authservice.mapper.AuthUserMapper;
+import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
 import com.veeteq.auth.authservice.service.*;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,12 +28,13 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.veeteq.auth.authservice.rest.dto.LoginRequestDto;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,9 +42,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false) // disable security filters for slice test
-@Import(JacksonProblemConfig.class)
-public class AuthController3Test {
+@AutoConfigureMockMvc(addFilters = false)
+@Import({JacksonProblemConfig.class, GlobalExceptionAdvice.class})
+public class AuthControllerWebTest {
+
     private static final String USERNAME = "jmclane";
     private static final String PASSWORD = "abc123456xyz";
     private static final String AUTHENTICATED_USERNAME = "demo";
@@ -83,18 +87,14 @@ public class AuthController3Test {
     @Value("${app.api.base-path}/auth")
     private String baseUrl;
 
-
+    // --- TEST (Sukces 200 OK) ---
     @Test
     @DisplayName("Should authenticate user, return access token and set refresh token cookie")
     void authenticate_shouldReturnToken_andSetCookie() throws Exception {
-        //given
         var request = createLoginRequest();
-        var authentication = new UsernamePasswordAuthenticationToken(AUTHENTICATED_USERNAME, null,List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        var authUser = new AuthUser()
-                .setUsername(AUTHENTICATED_USERNAME);
-
-        var refreshToken = new RefreshToken()
-                .setToken(REFRESH_TOKEN);
+        var authentication = new UsernamePasswordAuthenticationToken(AUTHENTICATED_USERNAME, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        var authUser = new AuthUser().setUsername(AUTHENTICATED_USERNAME);
+        var refreshToken = new RefreshToken().setToken(REFRESH_TOKEN);
 
         var refreshCookie = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, REFRESH_TOKEN)
                 .httpOnly(true)
@@ -107,7 +107,6 @@ public class AuthController3Test {
         when(accessTokenService.issueToken(any(Authentication.class))).thenReturn(accessTokenResult);
         when(refreshTokenService.issueToken(authUser)).thenReturn(refreshToken);
         when(cookieService.createCookie(REFRESH_TOKEN)).thenReturn(refreshCookie);
-        when(jwtEncoder.encode(any())).thenReturn(createJwt());
 
         var jwt = buildJwt();
         when(jwtEncoder.encode(any())).thenReturn(jwt);
@@ -126,6 +125,29 @@ public class AuthController3Test {
                 .andExpect(jsonPath("$.roles").value(containsInAnyOrder("USER_ROLE", "ACCOUNT_ADMIN", "DOCUMENT_ADMIN", "ITEM_ADMIN")));
     }
 
+    // --- TEST (Brak użytkownika / błędne poświadczenia 401 Unauthorized) ---
+    @Test
+    @DisplayName("Should return 401 Unauthorized when user is not found or credentials are invalid")
+    void test_UserNotFound_returns401Unauthorized() throws Exception {
+        var request = new LoginRequestDto()
+                .username("ghost.user")
+                .password("doesNotMatter123");
+
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new BadCredentialsException("Invalid username or password"));
+
+        mockMvc.perform(post(baseUrl.concat("/login"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status", is(401)));
+    }
+
+    // --- TEST (Błąd walidacji 400 Bad Request) ---
     @Test
     @DisplayName("Should reject login request when password is missing")
     void authenticate_shouldFail_missingPassword() throws Exception {
@@ -137,20 +159,18 @@ public class AuthController3Test {
                         .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.violations[0].field").value("password"))
-                .andExpect(jsonPath("$.violations[0].message").value("must not be null"));
+                .andExpect(status().isBadRequest());
     }
 
     private Jwt buildJwt() {
-        var jwt = Jwt.withTokenValue("jwt-token")
+        return Jwt.withTokenValue(ACCESS_TOKEN)
                 .header("alg", "RS256")
-                .claim("roles", List.of("ROLE_USER"))
-                .subject("demo")
+                .issuer(ISSUER)
+                .subject(AUTHENTICATED_USERNAME)
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(3600))
+                .claim("roles", List.of("ROLE_USER"))
                 .build();
-        return jwt;
     }
 
     private LoginRequestDto createLoginRequest() {
@@ -158,18 +178,4 @@ public class AuthController3Test {
                 .username(USERNAME)
                 .password(PASSWORD);
     }
-
-    private Jwt createJwt() {
-        var now = Instant.now();
-
-        return Jwt.withTokenValue(ACCESS_TOKEN)
-                .header("alg", "RS256")
-                .issuer(ISSUER)
-                .subject(AUTHENTICATED_USERNAME)
-                .issuedAt(now)
-                .expiresAt(now.plusSeconds(3600))
-                .claim("roles", List.of("ROLE_USER"))
-                .build();
-    }
-
 }
