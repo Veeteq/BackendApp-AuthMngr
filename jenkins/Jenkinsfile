@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     environment {
-      SPRING_PROFILES_ACTIVE = "default"
+      SPRING_PROFILES_ACTIVE = 'default'
       DB_CREDENTIALS = credentials('budget-db')
       VM_HOST = '192.168.56.104'
+      NETWORK_NAME = 'backend-network'
       JAR_PATH = 'authorization-app/target/authorization-app.jar'
       REPOSITORY_URL = 'ssh://root@192.168.56.104/root/git/bck-authorization-svc.git'
       IMAGE_NAME = 'authorization-app'
@@ -12,8 +13,8 @@ pipeline {
       CONTAINER_NAME = 'authorization-app'
       HOST_PORT = '8082'
       CONTAINER_PORT = '8080'
-      ACCESS_TOKEN_SECONDS = 3600
-      REFRESH_TOKEN_DAYS = 14
+      ACCESS_TOKEN_SECONDS = '3600s'
+      REFRESH_TOKEN_DAYS = '14d'
     }
 
     parameters {
@@ -29,6 +30,8 @@ pipeline {
                 echo "DB_NAME=$DB_NAME"
                 echo "DB_USER=$DB_CREDENTIALS_USR"
                 echo "NETWORK_NAME=$NETWORK_NAME"
+                echo "ACCESS_TOKEN_SECONDS=$ACCESS_TOKEN_SECONDS"
+                echo "REFRESH_TOKEN_DAYS=$REFRESH_TOKEN_DAYS"
             }
         }
 
