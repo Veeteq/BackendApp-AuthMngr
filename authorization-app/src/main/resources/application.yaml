@@ -47,9 +47,15 @@ app:
     base-path: /api
   cors:
     allowed-origins:
+      # Windows / localhost
       - http://localhost:4201 #Document
       - http://localhost:4202 #AuthAdmin
       - http://localhost:4203 #Addressbook
+
+      # Oracle Linux VM
+      - http://192.168.56.104:4201
+      - http://192.168.56.104:4202
+      - http://192.168.56.104:4203
     allowed-methods:
       - GET
       - POST
